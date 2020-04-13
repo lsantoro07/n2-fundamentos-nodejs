@@ -6,6 +6,12 @@ interface Balance {
   total: number;
 }
 
+interface CreateTransactionDTO {
+  title: string;
+  value: number;
+  type: 'income' | 'outcome';
+}
+
 class TransactionsRepository {
   private transactions: Transaction[];
 
@@ -14,15 +20,36 @@ class TransactionsRepository {
   }
 
   public all(): Transaction[] {
-    // TODO
+    return this.transactions;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   public getBalance(): Balance {
-    // TODO
+    const income = this.transactions.reduce(
+      (accu, { type, value }) => (type === 'income' ? accu + value : accu),
+      0,
+    );
+    const outcome = this.transactions.reduce(
+      (accu, { type, value }) => (type === 'outcome' ? accu + value : accu),
+      0,
+    );
+    const balance = { income, outcome, total: income - outcome };
+
+    return balance;
   }
 
-  public create(): Transaction {
-    // TODO
+  public create({ title, value, type }: CreateTransactionDTO): Transaction {
+    const balance = this.getBalance();
+
+    if (type === 'outcome' && balance.total < value) {
+      throw Error("You don't have enough balance to complete this transaction");
+    }
+
+    const transaction = new Transaction({ title, value, type });
+
+    this.transactions.push(transaction);
+
+    return transaction;
   }
 }
 
